@@ -78,9 +78,55 @@
   .opt:focus-visible{box-shadow:0 0 0 3px rgba(2,84,63,.25);}
   .vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none;}
 
+  /* ---- カメラ（開いたらすぐ撮影できる状態にする） ---- */
+  .cap{width:100%;}
+  .cam{
+    position:relative;width:100%;
+    height:calc(100vh - 310px);height:calc(100dvh - 310px);min-height:260px;max-height:600px;
+    background:#111;border-radius:18px;overflow:hidden;
+  }
+  .cam video{display:block;width:100%;height:100%;object-fit:contain;background:#111;}
+  .cam video.mirror{transform:scaleX(-1);}
+  .cam-tip{
+    position:absolute;left:10px;right:10px;top:10px;padding:7px 10px;border-radius:10px;
+    background:rgba(17,17,17,.6);color:#fff;font-size:12px;font-weight:600;line-height:1.5;text-align:center;
+    pointer-events:none;
+  }
+  .cam-rec{
+    position:absolute;left:12px;top:12px;display:flex;align-items:center;gap:7px;
+    padding:6px 12px;border-radius:16px;background:rgba(17,17,17,.7);color:#fff;
+    font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;pointer-events:none;
+  }
+  .cam-rec i{width:10px;height:10px;border-radius:50%;background:#E0392B;animation:recblink 1s steps(2,start) infinite;}
+  .cam-rec small{font-size:11px;font-weight:700;}
+  @keyframes recblink{to{visibility:hidden;}}
+  .shutter{
+    appearance:none;-webkit-appearance:none;cursor:pointer;
+    position:absolute;left:50%;bottom:14px;width:68px;height:68px;margin-left:-34px;padding:0;
+    border-radius:50%;border:4px solid #fff;background:rgba(17,17,17,.25);
+    display:flex;align-items:center;justify-content:center;touch-action:manipulation;outline:none;
+  }
+  .shutter span{width:50px;height:50px;border-radius:50%;background:#E0392B;transition:width .15s,height .15s,border-radius .15s;}
+  .shutter.rec span{width:24px;height:24px;border-radius:6px;}
+  .shutter:active{opacity:.8;}
+  .shutter:focus-visible{box-shadow:0 0 0 4px rgba(255,255,255,.45);}
+  .cam-flip{
+    appearance:none;-webkit-appearance:none;font:inherit;cursor:pointer;
+    position:absolute;right:14px;bottom:22px;width:52px;height:52px;padding:0;border-radius:50%;
+    border:1.5px solid rgba(255,255,255,.75);background:rgba(17,17,17,.55);color:#fff;
+    font-size:12px;font-weight:800;touch-action:manipulation;outline:none;
+  }
+  .cam-off{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+    padding:18px;background:#111;color:#fff;text-align:center;font-size:13px;font-weight:600;line-height:1.7;
+  }
+  .cam-off p{margin:0;}
+  .cam-off .sbtn{height:46px;padding:0 22px;border-color:#fff;}
+  .hint.cap-hint{margin:10px 0 14px;text-align:center;}
+
   /* ---- 撮影ガイド ---- */
   .guide{
-    width:100%;margin:10px 0 14px;padding:14px 16px;border-radius:18px;
+    width:100%;margin:4px 0 0;padding:14px 16px;border-radius:18px;
     border:1.5px solid var(--soft);font-size:13px;line-height:1.7;color:#333;
   }
   .guide b{display:block;margin-bottom:4px;color:var(--green);font-size:11px;letter-spacing:.24em;}
@@ -94,7 +140,7 @@
   }
 
   /* ---- 動画プレビュー ---- */
-  .work{width:100%;margin-top:8px;}
+  .work{width:100%;}
   .stage{
     position:relative;width:100%;aspect-ratio:16 / 9;
     max-height:46vh;max-height:min(46dvh,460px);
@@ -234,26 +280,45 @@
     <button class="opt tempo" data-target="100" aria-pressed="false">速い<small>BPM 100</small></button>
   </div>
 
-  <div class="guide" id="guide">
-    <b>撮影のポイント</b>
-    <ul>
-      <li>パター全体が画面に収まるように、iPhoneを固定してください。</li>
-      <li>正面から、ヘッドが画面の左右に動く向きで撮影してください。</li>
-      <li>通常のビデオで撮影してください（スローモーションは使えません）。</li>
-      <li>動画はこの端末の中だけで処理され、外部には送信されません。</li>
-    </ul>
-  </div>
+  <div class="msg" id="msg" role="alert" hidden></div>
 
-  <div class="seg">
-    <label class="opt pick" for="fileShoot" role="button" tabindex="0">撮影する<small>カメラを起動</small></label>
-    <label class="opt pick" for="fileChoose" role="button" tabindex="0">動画を選ぶ<small>写真ライブラリから</small></label>
-  </div>
+  <section class="cap" id="capture">
+    <div class="cam" id="camBox">
+      <video id="cam" playsinline webkit-playsinline muted autoplay></video>
+      <div class="cam-tip" id="camTip" hidden>iPhoneを固定して、パター全体を画面に入れてください</div>
+      <div class="cam-rec" id="camRec" hidden><i></i><span><span id="camTime">0.0</span><small> 秒</small></span></div>
+      <button class="cam-flip" id="camFlip" aria-label="カメラを切り替える" hidden>切替</button>
+      <button class="shutter" id="shutter" aria-label="撮影を開始" hidden><span></span></button>
+      <div class="cam-off" id="camOff">
+        <p id="camOffText">カメラを準備しています…</p>
+        <button class="sbtn main" id="camRetry" hidden>カメラを起動</button>
+      </div>
+    </div>
+    <p class="hint cap-hint">赤いボタンで撮影を始め、ストロークが終わったらもう一度押して止めます。</p>
+
+    <div class="seg">
+      <label class="opt pick" for="fileChoose" role="button" tabindex="0">動画を選ぶ<small>写真ライブラリから</small></label>
+      <label class="opt pick" for="fileShoot" role="button" tabindex="0">標準カメラ<small>iPhoneのカメラで撮影</small></label>
+    </div>
+
+    <div class="guide" id="guide">
+      <b>撮影のポイント</b>
+      <ul>
+        <li>パター全体が画面に収まるように、iPhoneを固定してください。</li>
+        <li>正面から、ヘッドが画面の左右に動く向きで撮影してください。</li>
+        <li>通常のビデオで撮影してください（スローモーションは使えません）。</li>
+        <li>動画はこの端末の中だけで処理され、外部には送信されません。</li>
+      </ul>
+    </div>
+  </section>
   <input class="vh" type="file" id="fileShoot" accept="video/*" capture="environment" tabindex="-1" aria-hidden="true">
   <input class="vh" type="file" id="fileChoose" accept="video/*" tabindex="-1" aria-hidden="true">
 
-  <div class="msg" id="msg" role="alert" hidden></div>
-
   <section class="work" id="work" hidden>
+    <div class="seg">
+      <button class="opt pick" id="reshoot">撮り直す<small>カメラに戻る</small></button>
+      <label class="opt pick" for="fileChoose" role="button" tabindex="0">動画を選ぶ<small>写真ライブラリから</small></label>
+    </div>
     <div class="stage" id="stage">
       <video id="video" playsinline webkit-playsinline muted preload="auto"></video>
       <div class="loading" id="loading">読み込み中…</div>
@@ -329,7 +394,11 @@
     // 異常値の判定
     limits: { minSection: 0.15, maxSection: 3.0, minBpm: 30, maxBpm: 240 },
     video: { defaultFps: 30, minFps: 10, maxFps: 240, loadTimeoutMs: 20000,
-             standardFps: [24, 25, 30, 48, 50, 60, 90, 100, 120, 240] }
+             standardFps: [24, 25, 30, 48, 50, 60, 90, 100, 120, 240] },
+    // 画面内カメラでの撮影
+    camera: { width: 1280, height: 720, frameRate: 60,     // 希望値（対応していない端末では端末側の値になる）
+              maxSeconds: 30, minSeconds: 1, bitsPerSecond: 8000000,
+              mimeTypes: ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'] }
   };
   const EPS = 1e-9;
 
@@ -433,7 +502,7 @@
   // =====================================================================
   const $ = id => document.getElementById(id);
   const video = $('video'), stage = $('stage'), loading = $('loading'), info = $('info');
-  const work = $('work'), guide = $('guide'), msg = $('msg'), result = $('result');
+  const work = $('work'), capture = $('capture'), msg = $('msg'), result = $('result');
   const seek = $('seek'), track = $('track'), fill = $('fill'), thumb = $('thumb'), pins = $('pins');
   const tNow = $('tNow'), tDur = $('tDur');
   const toggleBtn = $('toggle'), rateBtn = $('rate'), calcBtn = $('calc');
@@ -466,8 +535,15 @@
     return (v > 0 ? '+' : '−') + s;
   };
 
-  function showMsg(text) { msg.textContent = text; msg.hidden = false; }
-  function clearMsg() { msg.hidden = true; msg.textContent = ''; }
+  function showMsg(text) {
+    msg.textContent = text; msg.hidden = false;
+    fitCam();
+    const r = msg.getBoundingClientRect();           // 画面外にあるときは見える位置まで移動する
+    if (r.top < 0 || r.bottom > window.innerHeight) {
+      try { msg.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) { msg.scrollIntoView(); }
+    }
+  }
+  function clearMsg() { if (msg.hidden) return; msg.hidden = true; msg.textContent = ''; fitCam(); }
 
   // =====================================================================
   // 4. 目標テンポ
@@ -512,11 +588,18 @@
     setRate(0);
   }
 
+  // 撮影画面（最初の状態）に戻す
+  function showCapture() {
+    work.hidden = true;
+    capture.hidden = false;
+    fitCam();
+    startCamera();
+  }
+
   function loadError(text) {
     unloadVideo();
-    work.hidden = true;
-    guide.hidden = false;
     resetMarks();
+    showCapture();
     showMsg(text);
   }
 
@@ -528,17 +611,19 @@
     timer = setTimeout(() => done('timeout'), ms);
   });
 
-  async function loadFile(file) {
+  // opts.fpsHint：カメラ設定から分かるコマ数（動画から測れなかったときの予備）
+  async function loadFile(file, opts = {}) {
     if (!file) return;                               // 選択をキャンセルした場合は何もしない
     clearMsg();
     if (file.type && !file.type.startsWith('video/')) {
       loadError('動画ファイルを選んでください。');
       return;
     }
+    stopCamera();
     unloadVideo();
     resetMarks();
     const token = state.loadToken;
-    guide.hidden = true;
+    capture.hidden = true;
     work.hidden = false;
     loading.hidden = false;
     loading.textContent = '読み込み中…';
@@ -572,11 +657,19 @@
       }
       stage.style.aspectRatio = video.videoWidth + ' / ' + video.videoHeight;
 
-      // 長さが取得できない形式への対処（末尾までシークして長さを確定させる）
+      // 長さが取得できない形式（画面内で録画した動画など）への対処：
+      // 末尾までシークして長さを確定させ、先頭に戻す
       if (!Number.isFinite(video.duration)) {
         video.currentTime = 1e7;
-        await once(video, ['durationchange', 'seeked', 'error'], 5000);
-        if (token !== state.loadToken) return;
+        for (let i = 0; i < 100 && !Number.isFinite(video.duration); i++) {
+          await sleep(50);
+          if (token !== state.loadToken) return;
+        }
+        try { video.currentTime = 0; } catch (e) {}
+        for (let i = 0; i < 60 && (video.seeking || video.currentTime > 0.05); i++) {
+          await sleep(50);
+          if (token !== state.loadToken) return;
+        }
       }
       if (!Number.isFinite(video.duration) || video.duration <= 0) {
         loadError('動画の長さを取得できませんでした。別の動画でお試しください。');
@@ -588,6 +681,11 @@
 
       await probeFrameRate(token);
       if (token !== state.loadToken) return;
+      if (!state.fpsKnown && Number.isFinite(opts.fpsHint) && opts.fpsHint >= CONFIG.video.minFps && opts.fpsHint <= CONFIG.video.maxFps) {
+        const std = CONFIG.video.standardFps.find(f => Math.abs(opts.fpsHint - f) / f <= 0.025);
+        state.frameDur = 1 / (std || opts.fpsHint);
+        state.fpsKnown = true;
+      }
 
       video.pause();
       state.ready = true;
@@ -608,10 +706,9 @@
       input.value = '';                               // 同じ動画をもう一度選べるようにする
       loadFile(file);
     });
-    const label = document.querySelector(`label[for="${id}"]`);
-    label.addEventListener('keydown', e => {
+    document.querySelectorAll(`label[for="${id}"]`).forEach(label => label.addEventListener('keydown', e => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); }
-    });
+    }));
   });
 
   video.addEventListener('error', () => {
@@ -926,24 +1023,227 @@
 
   calcBtn.addEventListener('click', () => { pauseAndSnap(); refreshResult(true); });
 
-  $('retry').addEventListener('click', () => {
+  // 再測定・撮り直し：撮影画面に戻る
+  function backToCapture() {
     unloadVideo();
     resetMarks();
     clearMsg();
-    work.hidden = true;
-    guide.hidden = false;
+    showCapture();
     try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); }
+  }
+  $('retry').addEventListener('click', backToCapture);
+  $('reshoot').addEventListener('click', backToCapture);
+
+  // =====================================================================
+  // 10. カメラでの撮影（画面を開いたらすぐ撮影できる状態にする）
+  //     録画した動画は、選んだ動画と同じ流れ（loadFile）で確認画面に渡す
+  // =====================================================================
+  const cam = $('cam'), camBox = $('camBox'), camTip = $('camTip'), camRec = $('camRec'), camTime = $('camTime');
+  const camFlip = $('camFlip'), shutter = $('shutter'), camOff = $('camOff'), camOffText = $('camOffText'), camRetry = $('camRetry');
+  const camState = {
+    stream: null, facing: 'environment', starting: false, token: 0, fps: null, multi: false,
+    recorder: null, chunks: [], recStart: 0, timer: null, autoStop: null, discard: false, interrupted: false
+  };
+  const canCapture = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  const canRecord = typeof MediaRecorder !== 'undefined';
+
+  // カメラ枠を、画面の残りの高さに合わせる（端末サイズが違っても録画ボタンが最初の画面に入るように）
+  function fitCam() {
+    if (capture.hidden) return;
+    const top = camBox.getBoundingClientRect().top + window.scrollY;
+    camBox.style.height = Math.round(clamp(window.innerHeight - top - 14, 260, 600)) + 'px';
+  }
+
+  // 撮影中は画面が暗くならないようにする
+  let wakeLock = null;
+  async function lockScreen() {
+    try { if ('wakeLock' in navigator && !wakeLock) wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
+  }
+  function unlockScreen() { try { wakeLock && wakeLock.release(); } catch (e) {} wakeLock = null; }
+
+  function showCamOff(text, withRetry) {
+    camOffText.textContent = text;
+    camRetry.hidden = !withRetry;
+    camOff.hidden = false;
+    shutter.hidden = true; camTip.hidden = true; camFlip.hidden = true; camRec.hidden = true;
+  }
+
+  function cameraErrorText(e) {
+    const n = e && e.name;
+    if (n === 'NotAllowedError' || n === 'SecurityError' || n === 'PermissionDeniedError') {
+      return 'カメラの使用が許可されていません。ブラウザの設定でこのサイトのカメラを許可してから「カメラを起動」を押すか、下の「標準カメラ」「動画を選ぶ」をお使いください。';
+    }
+    if (n === 'NotFoundError' || n === 'OverconstrainedError' || n === 'DevicesNotFoundError') {
+      return 'カメラが見つかりませんでした。下の「動画を選ぶ」をお使いください。';
+    }
+    if (n === 'NotReadableError' || n === 'TrackStartError' || n === 'AbortError') {
+      return 'カメラを起動できませんでした。ほかのアプリがカメラを使っていないか確認して、「カメラを起動」を押してください。';
+    }
+    return 'カメラを起動できませんでした。「カメラを起動」を押すか、下の「標準カメラ」「動画を選ぶ」をお使いください。';
+  }
+
+  function stopTracks(stream) { try { stream.getTracks().forEach(t => t.stop()); } catch (e) {} }
+
+  async function startCamera() {
+    if (camState.starting || camState.stream) return;
+    if (!canCapture || !canRecord) {
+      showCamOff('このブラウザでは、この画面内での撮影に対応していません。下の「標準カメラ」または「動画を選ぶ」をお使いください。', false);
+      return;
+    }
+    camState.starting = true;
+    const token = ++camState.token;
+    showCamOff('カメラを準備しています…', false);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { facingMode: { ideal: camState.facing },
+                 width: { ideal: CONFIG.camera.width }, height: { ideal: CONFIG.camera.height },
+                 frameRate: { ideal: CONFIG.camera.frameRate } }
+      });
+      // 準備中に画面が切り替わっていたら、使わずに止める
+      if (token !== camState.token || capture.hidden || document.hidden) { stopTracks(stream); return; }
+      camState.stream = stream;
+      const track = stream.getVideoTracks()[0];
+      const st = track && track.getSettings ? track.getSettings() : {};
+      camState.fps = Number.isFinite(st.frameRate) && st.frameRate > 0 ? st.frameRate : null;
+      if (st.facingMode === 'user' || st.facingMode === 'environment') camState.facing = st.facingMode;
+      cam.classList.toggle('mirror', camState.facing === 'user');   // 内側カメラは鏡のように表示（録画は反転しない）
+      if (track) track.addEventListener('ended', () => { if (camState.stream === stream) onCameraLost(); });
+      cam.srcObject = stream;
+      const p = cam.play(); if (p && p.catch) p.catch(() => {});
+      camOff.hidden = true; camRec.hidden = true;
+      shutter.hidden = false; camTip.hidden = false;
+      shutter.classList.remove('rec'); shutter.setAttribute('aria-label', '撮影を開始');
+      lockScreen();
+      try {
+        const devs = await navigator.mediaDevices.enumerateDevices();
+        camState.multi = devs.filter(d => d.kind === 'videoinput').length > 1;
+      } catch (e) { camState.multi = false; }
+      if (camState.stream === stream && !camState.recorder) camFlip.hidden = !camState.multi;
+    } catch (e) {
+      if (token === camState.token) showCamOff(cameraErrorText(e), true);
+    } finally {
+      if (token === camState.token) camState.starting = false;
+    }
+  }
+
+  function stopCamera() {
+    camState.token++;
+    camState.starting = false;
+    if (camState.recorder) { camState.discard = true; stopRecording(); }
+    if (camState.stream) { stopTracks(camState.stream); camState.stream = null; }
+    try { cam.pause(); } catch (e) {}
+    cam.srcObject = null;
+    shutter.hidden = true; camTip.hidden = true; camFlip.hidden = true; camRec.hidden = true;
+    unlockScreen();
+  }
+
+  function onCameraLost() {
+    stopCamera();
+    showCamOff('カメラが停止しました。「カメラを起動」を押してください。', true);
+  }
+
+  function pickMime() {
+    if (!canRecord || !MediaRecorder.isTypeSupported) return '';
+    return CONFIG.camera.mimeTypes.find(t => { try { return MediaRecorder.isTypeSupported(t); } catch (e) { return false; } }) || '';
+  }
+
+  function startRecording() {
+    if (!camState.stream || camState.recorder) return;
+    clearMsg();
+    const mime = pickMime();
+    let rec = null;
+    try {
+      rec = new MediaRecorder(camState.stream, Object.assign({ videoBitsPerSecond: CONFIG.camera.bitsPerSecond }, mime ? { mimeType: mime } : {}));
+    } catch (e) {
+      try { rec = new MediaRecorder(camState.stream); } catch (e2) { rec = null; }
+    }
+    if (!rec) { showMsg('この端末では画面内での録画を開始できませんでした。「標準カメラ」をお使いください。'); return; }
+    camState.recorder = rec; camState.chunks = []; camState.discard = false;
+    rec.addEventListener('dataavailable', e => { if (e.data && e.data.size) camState.chunks.push(e.data); });
+    rec.addEventListener('stop', () => onRecordingStopped(rec));
+    rec.addEventListener('error', () => {
+      if (camState.recorder !== rec) return;
+      camState.discard = true; stopRecording();
+      showMsg('録画中にエラーが発生しました。もう一度撮影するか、「標準カメラ」をお使いください。');
+    });
+    try { rec.start(); } catch (e) {
+      camState.recorder = null;
+      showMsg('この端末では画面内での録画を開始できませんでした。「標準カメラ」をお使いください。');
+      return;
+    }
+    // ここでの経過時間は画面表示と長さの目安だけに使う（ストロークの測定には使わない）
+    camState.recStart = performance.now();
+    shutter.classList.add('rec'); shutter.setAttribute('aria-label', '撮影を停止');
+    camTip.hidden = true; camFlip.hidden = true; camRec.hidden = false; camTime.textContent = '0.0';
+    camState.timer = setInterval(() => { camTime.textContent = fmt((performance.now() - camState.recStart) / 1000, 1); }, 100);
+    camState.autoStop = setTimeout(stopRecording, CONFIG.camera.maxSeconds * 1000);
+  }
+
+  function stopRecording() {
+    const rec = camState.recorder;
+    if (!rec) return;
+    clearInterval(camState.timer); clearTimeout(camState.autoStop);
+    camState.timer = null; camState.autoStop = null;
+    if (rec.state !== 'inactive') {
+      try { rec.stop(); return; } catch (e) {}
+    }
+    onRecordingStopped(rec);
+  }
+
+  function onRecordingStopped(rec) {
+    if (camState.recorder !== rec) return;            // 二重に呼ばれても1回だけ処理する
+    camState.recorder = null;
+    clearInterval(camState.timer); clearTimeout(camState.autoStop);
+    const elapsed = (performance.now() - camState.recStart) / 1000;
+    const chunks = camState.chunks; camState.chunks = [];
+    shutter.classList.remove('rec'); shutter.setAttribute('aria-label', '撮影を開始');
+    camRec.hidden = true;
+    if (camState.stream) { camTip.hidden = false; camFlip.hidden = !camState.multi; }
+    if (camState.discard) { camState.discard = false; return; }
+    if (elapsed < CONFIG.camera.minSeconds) {
+      showMsg('撮影時間が短すぎます。ストローク全体が入るように、もう一度撮影してください。');
+      return;
+    }
+    const type = rec.mimeType || (chunks[0] && chunks[0].type) || 'video/mp4';
+    const blob = new Blob(chunks, { type });
+    if (!blob.size) {
+      showMsg('録画データを取得できませんでした。もう一度撮影するか、「標準カメラ」をお使いください。');
+      return;
+    }
+    loadFile(blob, { fpsHint: camState.fps });         // カメラはこの中で停止する
+  }
+
+  shutter.addEventListener('click', () => { if (camState.recorder) stopRecording(); else startRecording(); });
+  camRetry.addEventListener('click', () => { clearMsg(); startCamera(); });
+  camFlip.addEventListener('click', () => {
+    if (camState.recorder) return;
+    camState.facing = camState.facing === 'user' ? 'environment' : 'user';
+    stopCamera();
+    startCamera();
   });
 
-  // 画面を離れるときは再生を止める
-  document.addEventListener('visibilitychange', () => { if (document.hidden) { try { video.pause(); } catch (e) {} } });
+  // 画面を離れるときは再生・カメラを止め、戻ったら撮影画面のカメラを再開する
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      try { video.pause(); } catch (e) {}
+      if (camState.recorder) camState.interrupted = true;
+      stopCamera();
+    } else if (!capture.hidden) {
+      if (camState.interrupted) { camState.interrupted = false; showMsg('撮影が中断されました。もう一度撮影してください。'); }
+      startCamera();
+    }
+  });
+  window.addEventListener('pagehide', stopCamera);
 
   renderMarks();
   setRate(0);
-  window.addEventListener('resize', renderMarks);
+  window.addEventListener('resize', () => { renderMarks(); fitCam(); });
+  fitCam();
+  startCamera();
 
   // 検証用（画面には影響しない）
-  window.GGStroke = { CONFIG, calcStroke, judgeDiff, evaluate, state };
+  window.GGStroke = { CONFIG, calcStroke, judgeDiff, evaluate, state, camState };
 })();
 </script>
 </body>
