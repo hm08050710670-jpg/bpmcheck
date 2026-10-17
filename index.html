@@ -449,8 +449,8 @@
     video: { defaultFps: 30, minFps: 10, maxFps: 240, loadTimeoutMs: 20000,
              standardFps: [24, 25, 30, 48, 50, 60, 90, 100, 120, 240] },
     // 画面内カメラでの撮影
-    camera: { width: 1280, height: 720, frameRate: 60,     // 希望値（対応していない端末では端末側の値になる）
-              maxSeconds: 30, minSeconds: 1, bitsPerSecond: 8000000,
+    camera: { width: 1920, height: 1080, frameRate: 60,    // 希望値（対応していない端末では端末側の値になる）
+              maxSeconds: 30, minSeconds: 1, bitsPerSecond: 20000000,   // 1080p・60コマ向けの画質
               mimeTypes: ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'] },
     // テンポの音（メトロノーム画面と同じ音・3/4拍子）。音量はメトロノーム画面の初期値と同じ
     metronome: { beatsPerBar: 3, volume: 70 }
@@ -1255,7 +1255,7 @@
   const camRetry = $('camRetry'), camAlt = $('camAlt');
   const camState = {
     stream: null, facing: 'environment', starting: false, token: 0, fps: null, multi: false,
-    recorder: null, chunks: [], recStart: 0, timer: null, autoStop: null, discard: false, interrupted: false
+    size: null, recorder: null, chunks: [], recStart: 0, timer: null, autoStop: null, discard: false, interrupted: false
   };
   const canCapture = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
   const canRecord = typeof MediaRecorder !== 'undefined';
@@ -1314,6 +1314,7 @@
       const track = stream.getVideoTracks()[0];
       const st = track && track.getSettings ? track.getSettings() : {};
       camState.fps = Number.isFinite(st.frameRate) && st.frameRate > 0 ? st.frameRate : null;
+      camState.size = [st.width || 0, st.height || 0];
       if (st.facingMode === 'user' || st.facingMode === 'environment') camState.facing = st.facingMode;
       cam.classList.toggle('mirror', camState.facing === 'user');   // 内側カメラは鏡のように表示（録画は反転しない）
       if (track) track.addEventListener('ended', () => { if (camState.stream === stream) onCameraLost(); });
