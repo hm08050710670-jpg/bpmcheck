@@ -831,6 +831,8 @@
       return;
     }
     stopCamera();
+    // 撮影中に鳴らしていたテンポの音は、動画の確認に入るときに止める（選択はそのまま）
+    if (metro.playing) { metro.stop(); renderTempo(); }
     unloadVideo();
     resetMarks();
     const token = state.loadToken;
@@ -949,6 +951,11 @@
   function onVideoFrame(now, meta) {
     if (meta && Number.isFinite(meta.mediaTime)) {
       const t = meta.mediaTime;
+      // 先頭などへ戻した直後に、再生していたときの先のコマの通知が遅れて届くことがある。その場合は無視して次のコマを待つ
+      if (state.awaitFrame && video.paused && t > state.wantTime + state.frameDur * 1.5) {
+        frameLoop = video.requestVideoFrameCallback(onVideoFrame);
+        return;
+      }
       state.frameTime = t;
       state.awaitFrame = false;
       if (!video.paused && !video.seeking) {
