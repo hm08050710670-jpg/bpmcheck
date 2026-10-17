@@ -35,7 +35,7 @@
   /* 時計・電池の表示部分（セーフエリア）はメトロノーム画面と同じ色にして、文字が読めるようにする */
   .app::before{content:"";position:absolute;z-index:40;top:0;left:0;right:0;height:var(--sat);background:var(--ivory);}
   .view{position:relative;flex:1 1 auto;min-height:0;background:var(--black);overflow:hidden;}
-  .view video{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:contain;background:var(--black);}
+  .view video{position:absolute;top:0;left:0;display:block;width:100%;height:auto;background:var(--black);}
   .view video.mirror{transform:scaleX(-1);}
   .loading{
     position:absolute;inset:0;z-index:4;display:flex;align-items:center;justify-content:center;
@@ -57,6 +57,7 @@
   }
   .rbtn:active{opacity:.7;}
   .top .seg{flex:1;min-width:0;max-width:420px;margin:0 auto;gap:8px;}
+  .top #helpBtn{margin-left:auto;}
 
   /* ---- 選択ボタン（メトロノーム画面と同じ） ---- */
   .seg{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;}
@@ -94,7 +95,7 @@
   .cap{position:absolute;inset:0;z-index:5;pointer-events:none;}
   .cap > *{pointer-events:auto;}
   .cam-tip{
-    position:absolute;left:12px;right:12px;bottom:calc(var(--sab) + 116px);
+    position:absolute;left:12px;right:12px;bottom:10px;
     max-width:340px;margin:0 auto;padding:7px 10px;border-radius:10px;
     background:rgba(17,17,17,.6);color:#fff;font-size:12px;font-weight:600;line-height:1.5;text-align:center;
     pointer-events:none;
@@ -108,38 +109,41 @@
   .cam-rec i{width:10px;height:10px;border-radius:50%;background:#E0392B;animation:recblink 1s steps(2,start) infinite;}
   .cam-rec small{font-size:11px;font-weight:700;}
   @keyframes recblink{to{visibility:hidden;}}
+  /* 撮影パネル：目標テンポ＋撮影ボタン（確認パネルと同じ高さにそろえる） */
+  .panel.cp .panel-in{display:flex;flex-direction:column;justify-content:space-evenly;height:100%;gap:8px;padding-top:10px;}
+  .panel.cp .seg{gap:10px;}
+  .panel.cp .opt.tempo{height:60px;font-size:22px;}
   .capbar{
-    position:absolute;left:0;right:0;bottom:0;
     display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
-    padding:26px calc(var(--sar) + 22px) calc(max(var(--sab), 16px) + 12px) calc(var(--sal) + 22px);
-    background:linear-gradient(rgba(17,17,17,0),rgba(17,17,17,.62));
+    padding:0 6px;
   }
   .side{
     appearance:none;-webkit-appearance:none;font:inherit;cursor:pointer;
-    grid-column:1;justify-self:start;width:66px;height:52px;padding:0;border-radius:14px;
+    grid-column:1;justify-self:start;width:72px;height:56px;padding:0;border-radius:16px;
     display:flex;align-items:center;justify-content:center;text-align:center;
-    border:1.5px solid rgba(255,255,255,.75);background:rgba(17,17,17,.55);color:#fff;
-    font-size:11px;font-weight:800;line-height:1.3;touch-action:manipulation;outline:none;
+    border:1.5px solid var(--green);background:var(--ivory);color:var(--black);
+    font-size:12px;font-weight:800;line-height:1.3;touch-action:manipulation;outline:none;
   }
+  .side:active{transform:scale(.96);}
   .shutter{
     appearance:none;-webkit-appearance:none;cursor:pointer;
-    grid-column:2;width:72px;height:72px;padding:0;
-    border-radius:50%;border:4px solid #fff;background:rgba(17,17,17,.25);
+    grid-column:2;width:76px;height:76px;padding:0;
+    border-radius:50%;border:4px solid var(--green);background:var(--ivory);
     display:flex;align-items:center;justify-content:center;touch-action:manipulation;outline:none;
   }
-  .shutter span{width:54px;height:54px;border-radius:50%;background:#E0392B;transition:width .15s,height .15s,border-radius .15s;}
-  .shutter.rec span{width:26px;height:26px;border-radius:6px;}
+  .shutter span{width:56px;height:56px;border-radius:50%;background:#E0392B;transition:width .15s,height .15s,border-radius .15s;}
+  .shutter.rec span{width:28px;height:28px;border-radius:7px;}
   .shutter:active{opacity:.8;}
-  .shutter:focus-visible{box-shadow:0 0 0 4px rgba(255,255,255,.45);}
+  .shutter:focus-visible{box-shadow:0 0 0 4px rgba(2,84,63,.25);}
   .cam-flip{
     appearance:none;-webkit-appearance:none;font:inherit;cursor:pointer;
-    grid-column:3;justify-self:end;width:52px;height:52px;padding:0;border-radius:50%;
-    border:1.5px solid rgba(255,255,255,.75);background:rgba(17,17,17,.55);color:#fff;
+    grid-column:3;justify-self:end;width:56px;height:56px;padding:0;border-radius:50%;
+    border:1.5px solid var(--green);background:var(--ivory);color:var(--black);
     font-size:12px;font-weight:800;touch-action:manipulation;outline:none;
   }
   .cam-off{
     position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
-    padding:76px 22px calc(var(--sab) + 112px);background:var(--black);color:#fff;
+    padding:76px 22px 24px;background:var(--black);color:#fff;
     text-align:center;font-size:13px;font-weight:600;line-height:1.7;
   }
   .cam-off p{margin:0;max-width:340px;}
@@ -168,10 +172,10 @@
   /* ---- 確認：操作パネル（映像の下。映像には重ねない） ---- */
   .panel{
     flex:none;position:relative;z-index:4;background:var(--ivory);border-radius:18px 18px 0 0;
-    padding:4px calc(var(--sar) + 12px) calc(max(var(--sab), 16px) + 10px) calc(var(--sal) + 12px);
+    padding:0 calc(var(--sar) + 12px) calc(max(var(--sab), 16px) + 10px) calc(var(--sal) + 12px);
   }
   .panel-in{max-width:520px;margin:0 auto;}
-  .slider{position:relative;height:40px;touch-action:none;cursor:pointer;outline:none;}
+  .slider{position:relative;height:36px;margin-bottom:2px;touch-action:none;cursor:pointer;outline:none;}
   .track{position:absolute;left:14px;right:14px;top:50%;height:4px;margin-top:-2px;border-radius:2px;background:rgba(2,84,63,.16);}
   .fill{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:var(--green);}
   .thumb{position:absolute;z-index:2;top:50%;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;
@@ -203,7 +207,7 @@
   .sbtn:focus-visible{box-shadow:0 0 0 3px rgba(2,84,63,.25);}
 
   /* ---- 3つのタイミング＋計算 ---- */
-  .marks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;width:100%;}
+  .marks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%;margin-bottom:8px;}
   .mark{
     appearance:none;-webkit-appearance:none;font:inherit;cursor:pointer;
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
@@ -220,13 +224,13 @@
     display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;line-height:1;
   }
   .mark.set .mnum{background:var(--green);border-color:var(--green);color:#fff;}
-  .mname{font-size:clamp(10px,3vw,12px);font-weight:800;line-height:1.1;white-space:nowrap;}
-  .mtime{font-size:clamp(9px,2.7vw,11px);font-weight:700;color:#555;font-variant-numeric:tabular-nums;line-height:1.1;white-space:nowrap;}
+  .mname{font-size:clamp(11px,3.4vw,14px);font-weight:800;line-height:1.1;white-space:nowrap;}
+  .mtime{font-size:clamp(10px,3vw,12px);font-weight:700;color:#555;font-variant-numeric:tabular-nums;line-height:1.1;white-space:nowrap;}
   .mark.set .mtime{color:var(--green);}
   .calc{
     appearance:none;-webkit-appearance:none;font:inherit;cursor:pointer;
-    min-height:62px;padding:0;border-radius:14px;border:none;background:var(--green);color:#fff;
-    font-size:15px;font-weight:800;letter-spacing:.08em;line-height:1.3;
+    display:block;width:100%;height:52px;padding:0;border-radius:26px;border:none;background:var(--green);color:#fff;
+    font-size:17px;font-weight:800;letter-spacing:.14em;line-height:1;
     touch-action:manipulation;outline:none;
   }
   .calc:active{opacity:.88;}
@@ -311,6 +315,11 @@
       <b><span id="tNow">0.000</span><small> 秒</small></b>
       <small>全体 <span id="tDur">0.000</span> 秒<span id="info"></span></small>
     </div>
+    <!-- 撮影中に映像の上に重ねる表示（映像エリアの中だけに出す） -->
+    <section class="cap" id="capture">
+      <div class="cam-tip" id="camTip" hidden>iPhoneを固定して、パター全体を画面に入れてください</div>
+      <div class="cam-rec" id="camRec" hidden><i></i><span><span id="camTime">0.0</span><small> 秒</small></span></div>
+    </section>
   </div>
 
   <!-- 上部：目標テンポ（押すと音が鳴る）・使い方 -->
@@ -324,14 +333,14 @@
 
   <div class="msg" id="msg" role="alert" hidden></div>
 
-  <!-- 撮影 -->
-  <section class="cap" id="capture">
-    <div class="cam-tip" id="camTip" hidden>iPhoneを固定して、パター全体を画面に入れてください</div>
-    <div class="cam-rec" id="camRec" hidden><i></i><span><span id="camTime">0.0</span><small> 秒</small></span></div>
-    <div class="capbar">
-      <label class="side" for="fileChoose" role="button" tabindex="0">動画を<br>選ぶ</label>
-      <button class="shutter" id="shutter" aria-label="撮影を開始" hidden><span></span></button>
-      <button class="cam-flip" id="camFlip" aria-label="カメラを切り替える" hidden>切替</button>
+  <!-- 撮影パネル（目標テンポはここに移動して表示。確認画面では上部に戻る） -->
+  <section class="panel cp" id="capPanel">
+    <div class="panel-in">
+      <div class="capbar">
+        <label class="side" for="fileChoose" role="button" tabindex="0">動画を<br>選ぶ</label>
+        <button class="shutter" id="shutter" aria-label="撮影を開始" hidden><span></span></button>
+        <button class="cam-flip" id="camFlip" aria-label="カメラを切り替える" hidden>切替</button>
+      </div>
     </div>
   </section>
   <input class="vh" type="file" id="fileShoot" accept="video/*" capture="environment" tabindex="-1" aria-hidden="true">
@@ -355,8 +364,8 @@
         <button class="mark" data-key="start"><span class="mnum">1</span><span class="mname">始動</span><span class="mtime">タップで設定</span></button>
         <button class="mark" data-key="top"><span class="mnum">2</span><span class="mname">トップ</span><span class="mtime">タップで設定</span></button>
         <button class="mark" data-key="finish"><span class="mnum">3</span><span class="mname">フォロー終了</span><span class="mtime">タップで設定</span></button>
-        <button class="calc" id="calc" disabled>BPM<br>計算</button>
       </div>
+      <button class="calc" id="calc" disabled>BPMを計算</button>
     </div>
   </section>
 
@@ -584,13 +593,31 @@
   msg.addEventListener('click', clearMsg);
 
   // 画面の切り替え（capture：撮影／review：確認）
+  const capPanel = $('capPanel'), tempoSeg = document.querySelector('.top .seg'), topBar = document.querySelector('.top');
   function setMode(mode) {
     app.dataset.mode = mode;
     capture.hidden = mode !== 'capture';
+    capPanel.hidden = mode !== 'capture';
     work.hidden = mode !== 'review';
     video.hidden = mode !== 'review';
     $('cam').hidden = mode !== 'capture';
-    if (mode === 'capture') loading.hidden = true;
+    if (mode === 'capture') {
+      loading.hidden = true;
+      // 目標テンポは撮影中は下のパネルに置く
+      capPanel.querySelector('.panel-in').insertBefore(tempoSeg, capPanel.querySelector('.capbar'));
+      syncPanelHeight();
+    } else {
+      topBar.insertBefore(tempoSeg, $('helpBtn'));
+    }
+  }
+  // 撮影パネルの高さを確認パネルと同じにする（映像が隠れる範囲を同じにするため）
+  function syncPanelHeight() {
+    if (capPanel.hidden) return;
+    const wasHidden = work.hidden;
+    work.hidden = false; work.style.visibility = 'hidden';
+    const h = work.offsetHeight;
+    work.style.visibility = ''; work.hidden = wasHidden;
+    if (h > 0) capPanel.style.height = h + 'px';
   }
 
   // =====================================================================
@@ -1414,7 +1441,7 @@
   window.addEventListener('pagehide', stopCamera);
 
   renderMarks();
-  window.addEventListener('resize', renderMarks);
+  window.addEventListener('resize', () => { renderMarks(); syncPanelHeight(); });
   setMode('capture');
   startCamera();
 
